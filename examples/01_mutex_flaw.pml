@@ -1,4 +1,4 @@
-bit   mutex;
+bit     mutex;
 byte  counter;
 
 

@@ -1,38 +1,26 @@
-// Both proc1 and proc2 needs both lock[0] and lock[1] to work.
+// The two processes will cause the value of the global variable x to alternate between 2 and 1, ad infinitum. No progress labels were used, so every cycle is guaranteed to be a non-progress cycle.
+// Define two progress label, then will not trigger error. Or define only one, and enable fairness. (because fairness ensures the label will be triggered.
 
-bit lock[2] = 0;  // Shared lock (0 = unlocked, 1 = locked)
+byte x = 2;
 
-proctype proc1() {
+active proctype A()
+{
     do
-    :: lock[0] == 0 ->
-        printf("proc1: locking\n");
-        lock[0] = 1;
-        // Simulate detecting the other process is trying to lock
-        if
-        :: lock[1] == 1 ->  // if the lock is held (by proc2), release lock[0]
-            printf("proc1: unlocking\n");
-            lock[0] = 0;
-        fi
+        :: x = 3 - x ->
+           if
+              :: x == 1 -> break;
+              :: else -> skip;
+           fi
     od
 }
 
-proctype proc2() {
+active proctype B()
+{
     do
-    :: lock[1] == 0 ->
-        printf("proc2: locking\n");
-        lock[1] = 1;
-        // Simulate detecting the other process is trying to lock
-        if
-        :: lock[0] == 1 ->  // if the lock is held (by proc1), release it
-            printf("proc2: unlocking\n");
-            lock[0] = 0;
-        fi
+        :: x = 3 - x ->
+           if
+              :: x == 2 -> break;
+              :: else -> skip;
+           fi
     od
-}
-
-init {
-    atomic {
-        run proc1();
-        run proc2();
-    }
 }

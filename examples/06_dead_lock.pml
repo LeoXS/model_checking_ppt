@@ -1,47 +1,23 @@
-// Both proc1 and proc2 needs both lock[0] and lock[1] to work.
+bool	flag[3]; // 0th element is not used.
 
-byte lock[2];  // Shared lock (0 = unlocked, 1 = locked)
+active proctype P1()
+{
+again:
+  flag[1] = true;
 
-proctype proc1() {
-    do
-    :: lock[0] == 0 ->
-        lock[0] = 1;
-        printf("proc1: locking 1\n");
-    :: lock[1] == 0 ->
-        lock[1] = 1;
-        printf("proc1: locking 2\n");
-    :: (lock[0] == 1) && (lock[1] == 1) -> break;
-    od
+  !flag[2]; // wait for flag[2] becomes false
 
-    // Release locks
-    lock[0] = 0;
-    printf("proc1: releasing 1\n");
-    lock[1] = 0;
-    printf("proc1: releasing 2\n");
+  flag[1] = false;
+  goto again
 }
 
-proctype proc2() {
-    do
-    :: lock[0] == 0 ->
-        lock[0] = 2;
-        printf("proc2: locking 1\n");
-    :: lock[1] == 0 ->
-        lock[1] = 2;
-        printf("proc2: locking 2\n");
-    :: ((lock[0] == 2) && (lock[1])) == 2 -> break;
-    od
+active proctype P2()
+{
+again:
+  flag[2] = true;
 
-    // Release locks
-    lock[0] = 0;
-    printf("proc2: releasing 1\n");
-    lock[1] = 0;
-    printf("proc2: releasing 2\n");
-}
+  !(flag[1]); // wait for flag[1] becomes false
 
-init {
-    atomic {
-        run proc1();
-        run proc2();
-    }
+  flag[2] = false;
+  goto again
 }
-// TODO
